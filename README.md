@@ -22,6 +22,7 @@ python3 shopify.py [-h] [--list-collections] [--collections COLLECTIONS]
 
   * --google-manufacturer: Outputs file to Google's Manufacturer Center Feed specification
   * --base-feed: Outputs basic product feed that includes Shopify's MetaField data
+  * --elliot-template: Outputs Shopify product data into an importable Elliot catalog CSV
 
 **Return a list of Shopify collections:**
 
