@@ -98,39 +98,41 @@ def extract_products_collection(url, col,template):
                         return i['src']
 
                 return ''
+            if template == ELLIOT_TEMPLATE_1:
+                yield {'product':product}
+            else :
+                for i, variant in enumerate(product['variants']):
+                    price = variant['price']
+                    option1_value = variant['option1'] or ''
+                    option2_value = variant['option2'] or ''
+                    option3_value = variant['option3'] or ''
+                    option_value = ' '.join([option1_value, option2_value,
+                                            option3_value]).strip()
+                    sku = variant['sku']
+                    main_image_src = ''
+                    if product['images']:
+                        main_image_src = product['images'][0]['src']
 
-            for i, variant in enumerate(product['variants']):
-                price = variant['price']
-                option1_value = variant['option1'] or ''
-                option2_value = variant['option2'] or ''
-                option3_value = variant['option3'] or ''
-                option_value = ' '.join([option1_value, option2_value,
-                                         option3_value]).strip()
-                sku = variant['sku']
-                main_image_src = ''
-                if product['images']:
-                    main_image_src = product['images'][0]['src']
-
-                image_src = get_image(variant['id']) or main_image_src
-                stock = 'Yes'
-                if not variant['available']:
-                    stock = 'No'
-                metafields = product['metafields'] if "metafields" in product else []
-                row = {
-                        'sku': sku, 'product_type': product_type,
-                       'title': title, 'option_value': option_value,
-                       'price': price, 'stock': stock, 'body': str(product['body_html']),
-                       'variant_id': product_handle + str(variant['id']),
-                       'product_url': product_url, 'image_src': image_src , "metafields" : metafields
-                       }
-                row.update(product)
-                for k in row:
-                    row[k] = str(str(row[k]).strip()) if row[k] else ''
-                if template == BASE_TEMPLATE or template == GOOGLE_TEMPLATE:
-                    yield {'row': row}
-                else : yield {'product':product,'variant': variant,
-                            'row': row
-                       }
+                    image_src = get_image(variant['id']) or main_image_src
+                    stock = 'Yes'
+                    if not variant['available']:
+                        stock = 'No'
+                    metafields = product['metafields'] if "metafields" in product else []
+                    row = {
+                            'sku': sku, 'product_type': product_type,
+                        'title': title, 'option_value': option_value,
+                        'price': price, 'stock': stock, 'body': str(product['body_html']),
+                        'variant_id': product_handle + str(variant['id']),
+                        'product_url': product_url, 'image_src': image_src , "metafields" : metafields
+                        }
+                    row.update(product)
+                    for k in row:
+                        row[k] = str(str(row[k]).strip()) if row[k] else ''
+                    if template == BASE_TEMPLATE or template == GOOGLE_TEMPLATE:
+                        yield {'row': row}
+                    else : yield {'product':product,'variant': variant,
+                                'row': row
+                        }
 
         page += 1
         products = get_page(url, page, col)
@@ -152,13 +154,13 @@ def extract_products(url, path, collections=None ,delimiter = "\t" , template = 
                 handle = col['handle']
                 title = col['title']
                 for product in extract_products_collection(url, handle,template):
-                    
-                    variant_id = product['row']['variant_id']
-                    if variant_id in seen_variants:
-                        continue
-                    seen_variants.add(variant_id)
-                    images = json.loads(product['row']["images"].replace("'", '"'))
-                    images = [x["src"].split("?")[0] for x in images[1:]]
+                    if template != ELLIOT_TEMPLATE_1:
+                        variant_id = product['row']['variant_id']
+                        if variant_id in seen_variants:
+                            continue
+                        seen_variants.add(variant_id)
+                        images = json.loads(product['row']["images"].replace("'", '"'))
+                        images = [x["src"].split("?")[0] for x in images[1:]]
                     if template == BASE_TEMPLATE:
                         if( len(product['row']['metafields']) > metafields_len ):
                             for index in range( len(product['row']['metafields']) - metafields_len ):
@@ -167,7 +169,7 @@ def extract_products(url, path, collections=None ,delimiter = "\t" , template = 
                     if template == GOOGLE_TEMPLATE or template == BASE_TEMPLATE:
                         ret,b = format_row_data(template , product['row'],images, title)
                     else: 
-                        ret,b = format_row_data(template , product,images, title)                        
+                        ret,b = format_row_data(template , product,[], title)                        
                     if b:
                         for i in ret:
                             rows_data.append(i)
@@ -262,9 +264,9 @@ def format_row_data(TEMPLATE ,product,images,title):
                         seo_desc = meta['value']
                     else:
                         seo_desc = str(meta)
-            products.append([ product['row']['title'] , product['row']['body_html'] , product['row']['sku'] , ""  ,   ] + attributes + _images + [i['price'] , i['price'] , quantity , format_unit_weight(unit_of_weight) , weight , "inches" , "3" , "3" , "3" ,seo_title,seo_desc])
+            products.append([ product['row']['title'] , product['row']['body_html'] , product['row']['sku'] , ""  ,   ] + attributes + _images + [i['price'] , i['price'] , quantity , format_unit_weight(unit_of_weight) , weight , "IN" , "3" , "3" , "3" ,seo_title,seo_desc])
         if len(products) == 0:
-            products.append([ product['row']['title'] , product['row']['body_html'] , product['row']['sku'] , ""  ,   ] + attributes + _images + ["" , "", "" , "" , "" , "inches" , "3" , "3" , "3" ,"",""])
+            products.append([ product['row']['title'] , product['row']['body_html'] , product['row']['sku'] , ""  ,   ] + attributes + _images + ["" , "", "" , "" , "" , "IN" , "3" , "3" , "3" ,"",""])
         return (products,True)
     elif TEMPLATE == ELLIOT_TEMPLATE_1:
         attributes = [] 
@@ -279,37 +281,40 @@ def format_row_data(TEMPLATE ,product,images,title):
                 pass
         _images = []
         # assuming only 3 options
-        for i in range(1,4):
-            if len(product['product']['options']) > i-1 :
-                attributes.append(product['product']['options'][i-1]['name'])
-                if 'variant' in product and 'option'+str(i) in product['variant']:
-                    attributes.append(product['variant']['option'+str(i)])
-                else: 
-                    attributes.append("")
-            else:
-                attributes.append("")
-                attributes.append("")
-        for i in range(5):
-            if len(images)> i:
-                _images.append(images[i])
-            else:
-                _images.append("")
         products = []
         # parent 
         p = product['product']
         vendor = p['vendor'] if 'vendor' in p else ''
-        sku = p['sku'] if 'sku' in p else ''
         base_images = list(map(lambda x: x['src'].split('?')[0] , p['images']))
         if(len(base_images) < 5):
             for i in range(5 - len(base_images)):
                 base_images += ['']
-        products.append([ p['title'] , p['body_html'] , p['sku'] if 'sku' in p else ''  ] + ['Unisex','',''] + base_images + get_product_row(p,metafields) + ['',''])
+        elif len(base_images) > 5:
+            base_images = base_images[0:5]
+        products.append([ p['title'] , p['body_html'] , p['sku'] if 'sku' in p else p['title']  ] + ['Unisex','','','','','',''] + base_images + get_product_row(p,metafields) + ['',''])
+        
+        sku = p['sku'] if 'sku' in p else p['title']
         # variants
         for i in variants:
+            attributes = []
+            base_images = ['','','','','']
+            if 'images' in i:
+                base_images = list(map(lambda x: x['src'].split('?')[0] , i['images']))[0:5]
+                if(len(base_images) < 5):
+                    for j in range(5 - len(base_images)):
+                        base_images += ['']
+            for j in range(1,4):
+                if len(product['product']['options']) > j-1 :
+                    attributes.append(product['product']['options'][j-1]['name'])
+                    if 'option'+str(j) in i:
+                        attributes.append(i['option'+str(j)])
+                    else: 
+                        attributes.append("")
+                else:
+                    attributes.append("")
+                    attributes.append("")
+            products.append([ "" , "" , i['sku'] if 'sku' in i else '' , "Unisex"  ,   ] + attributes + base_images + get_product_row(i,metafields) +[vendor,sku] ) 
 
-            products.append([ "" , product['row']['body_html'] , product['row']['sku'] , "Unisex"  ,   ] + attributes + _images + get_product_row(p,metafields) +[vendor,sku] ) 
-        if len(products) == 0:
-            products.append([ "" , product['row']['body_html'] , product['row']['sku'] , "Unisex"  ,   ] + attributes + _images + ["" , "", "" , "" , "" , "inches" , "3" , "3" , "3" ,"","" ,vendor,sku])
         return (products,True)
     else:
         return ([ product['sku'], str(title), product['product_type'], product['title'], product['option_value'], product['price'], product['stock'], product['product_url'], product['image_src'], product['body'] ] + [x for x in product['metafields']],False)
@@ -330,12 +335,12 @@ def get_product_row(i,metafields):
     unit_of_weight = ''
     seo_title = ''
     seo_desc = ''
-    if 'weight_unit' in i:
-            unit_of_weight = i['weight_unit']
-            weight = i['weight']
     if 'grams' in i : 
         unit_of_weight = 'grams'
         weight = i['grams']
+    if 'weight_unit' in i:
+        unit_of_weight = i['weight_unit']
+        weight = i['weight']
     for meta in metafields:
         if meta == 'metafields_global_title_tag':
             seo_title = metafields[meta]
@@ -351,7 +356,7 @@ def get_product_row(i,metafields):
                 seo_desc = meta['value']
             else:
                 seo_desc = str(meta)
-    return [ i['price'] if 'price' in i else '' , i['price'] if 'price' in i else '' , quantity , format_unit_weight(unit_of_weight) , weight , "inches" , "3" , "3" , "3" ,seo_title,seo_desc ]
+    return [ i['compare_at_price'] if 'compare_at_price' in i else (i['price'] if 'price' in i else ''), i['price'] if 'price' in i else '' , quantity , format_unit_weight(unit_of_weight) , weight , "IN" , "3" , "3" , "3" ,seo_title,seo_desc ]
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -381,11 +386,11 @@ if __name__ == '__main__':
                 collections = options.collections.split(',')
             filename = 'products.tsv' if options.tsv else 'products.csv'
             if(options.elliot_template):
-                extract_products(url,filename,collections,delimiter,ELLIOT_TEMPLATE)
+                extract_products(url,filename,collections,delimiter,ELLIOT_TEMPLATE_1)
             elif options.google_manufacturer:
                 extract_products(url, filename, collections , delimiter , GOOGLE_TEMPLATE)
             elif options.elliot_template_1:
-                extract_products(url, filename, collections , delimiter , ELLIOT_TEMPLATE_1)
+                extract_products(url, filename, collections , delimiter , ELLIOT_TEMPLATE)
             elif not options.base_feed:
                 extract_products(url, filename, collections , delimiter , GOOGLE_TEMPLATE)
             else:
