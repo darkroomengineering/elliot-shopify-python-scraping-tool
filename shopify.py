@@ -356,7 +356,12 @@ def get_product_row(i,metafields):
                 seo_desc = meta['value']
             else:
                 seo_desc = str(meta)
-    return [ i['compare_at_price'] if 'compare_at_price' in i else (i['price'] if 'price' in i else ''), i['price'] if 'price' in i else '' , quantity , format_unit_weight(unit_of_weight) , weight , "IN" , "3" , "3" , "3" ,seo_title,seo_desc ]
+    if 'variants' in i:
+        if len(i['variants']) >= 1:
+            k = i['variants'][0]
+        return [ k['compare_at_price'] if 'compare_at_price' in k else (k['price'] if 'price' in k else ''), k['price'] if 'price' in k else '' , quantity , format_unit_weight(unit_of_weight) , weight , "IN" , "3" , "3" , "3" ,seo_title,seo_desc ]
+    else:
+        return [ i['compare_at_price'] if 'compare_at_price' in i else (i['price'] if 'price' in i else ''), i['price'] if 'price' in i else '' , quantity , format_unit_weight(unit_of_weight) , weight , "IN" , "3" , "3" , "3" ,seo_title,seo_desc ]
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
