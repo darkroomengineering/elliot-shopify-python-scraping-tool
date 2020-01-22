@@ -330,7 +330,7 @@ def format_unit_weight(w):
     else:
         return ""
 def get_product_row(i,metafields):
-    quantity = i['inventory_quantity'] if 'inventory_quantity' in i  else ''
+    quantity = i['inventory_quantity'] if 'inventory_quantity' in i  else '1'
     weight = ''
     unit_of_weight = ''
     seo_title = ''
@@ -359,6 +359,12 @@ def get_product_row(i,metafields):
     if 'variants' in i:
         if len(i['variants']) >= 1:
             k = i['variants'][0]
+            if 'grams' in k : 
+                unit_of_weight = 'grams'
+                weight = k['grams']
+            if 'weight_unit' in k:
+                unit_of_weight = k['weight_unit']
+                weight = k['weight']
         return [ k['compare_at_price'] if 'compare_at_price' in k else (k['price'] if 'price' in k else ''), k['price'] if 'price' in k else '' , quantity , format_unit_weight(unit_of_weight) , weight , "IN" , "3" , "3" , "3" ,seo_title,seo_desc ]
     else:
         return [ i['compare_at_price'] if 'compare_at_price' in i else (i['price'] if 'price' in i else ''), i['price'] if 'price' in i else '' , quantity , format_unit_weight(unit_of_weight) , weight , "IN" , "3" , "3" , "3" ,seo_title,seo_desc ]
