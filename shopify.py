@@ -328,7 +328,7 @@ def format_unit_weight(w):
     if w.lower() == "kilograms" or w.lower()=="kg":
         return "KG"
     else:
-        return ""
+        return "LB"
 def get_product_row(i,metafields):
     quantity = i['inventory_quantity'] if 'inventory_quantity' in i  else '1'
     weight = ''
@@ -365,9 +365,9 @@ def get_product_row(i,metafields):
             if 'weight_unit' in k:
                 unit_of_weight = k['weight_unit']
                 weight = k['weight']
-        return [ k['compare_at_price'] if 'compare_at_price' in k else (k['price'] if 'price' in k else ''), k['price'] if 'price' in k else '' , quantity , format_unit_weight(unit_of_weight) , weight , "IN" , "3" , "3" , "3" ,seo_title,seo_desc ]
+        return [ k['price'] if 'price' in k else '', k['compare_at_price'] if 'compare_at_price' in k else (k['price'] if 'price' in k else '') , quantity , format_unit_weight(unit_of_weight) , weight if weight else '1' , "IN" , "3" , "3" , "3" ,seo_title,seo_desc ]
     else:
-        return [ i['compare_at_price'] if 'compare_at_price' in i else (i['price'] if 'price' in i else ''), i['price'] if 'price' in i else '' , quantity , format_unit_weight(unit_of_weight) , weight , "IN" , "3" , "3" , "3" ,seo_title,seo_desc ]
+        return [ i['price'] if 'price' in i else '', i['compare_at_price'] if 'compare_at_price' in i else (i['price'] if 'price' in i else '') , quantity , format_unit_weight(unit_of_weight) , weight if weight else '1' , "IN" , "3" , "3" , "3" ,seo_title,seo_desc ]
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
