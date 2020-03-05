@@ -365,9 +365,33 @@ def get_product_row(i,metafields):
             if 'weight_unit' in k:
                 unit_of_weight = k['weight_unit']
                 weight = k['weight']
-        return [ k['price'] if 'price' in k else '', k['compare_at_price'] if 'compare_at_price' in k else (k['price'] if 'price' in k else '') , quantity , format_unit_weight(unit_of_weight) , weight if weight else '1' , "IN" , "3" , "3" , "3" ,seo_title,seo_desc ]
+        base_price = k['compare_at_price'] if 'compare_at_price' in k else ''
+        if(base_price == '' or base_price==None): base_price = k['price'] if 'price' in k else ''
+        sale_price = k['price'] if base_price!='' else ''
+        try:
+            if(base_price != '' and sale_price != '' and float(base_price) < float(sale_price)):
+                tmp_var = sale_price
+                sale_price = base_price
+                base_price = tmp_var
+        except Exception as e:
+            pass
+        if sale_price == base_price:
+            sale_price = ''
+        return [ base_price, sale_price , quantity , format_unit_weight(unit_of_weight) , weight if weight else '1' , "IN" , "3" , "3" , "3" ,seo_title,seo_desc ]
     else:
-        return [ i['price'] if 'price' in i else '', i['compare_at_price'] if 'compare_at_price' in i else (i['price'] if 'price' in i else '') , quantity , format_unit_weight(unit_of_weight) , weight if weight else '1' , "IN" , "3" , "3" , "3" ,seo_title,seo_desc ]
+        base_price = i['compare_at_price'] if 'compare_at_price' in i else ''
+        if(base_price == '' or base_price==None): base_price = i['price'] if 'price' in i else ''
+        sale_price = i['price'] if base_price!='' else ''
+        try:
+            if(base_price != '' and sale_price != '' and float(base_price) < float(sale_price)):
+                tmp_var = sale_price
+                sale_price = base_price
+                base_price = tmp_var
+        except Exception as e:
+            pass
+        if sale_price == base_price:
+            sale_price = ''
+        return [ base_price, sale_price , quantity , format_unit_weight(unit_of_weight) , weight if weight else '1' , "IN" , "3" , "3" , "3" ,seo_title,seo_desc ]
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
